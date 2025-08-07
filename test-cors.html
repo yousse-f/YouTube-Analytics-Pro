@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test CORS - YouTube Scraper</title>
+</head>
+<body>
+    <h1>Test CORS YouTube Scraper</h1>
+    
+    <button onclick="testYouTubeEndpoint()">Test YouTube Endpoint (con CORS)</button>
+    <button onclick="testHealthEndpoint()">Test Health Endpoint (senza CORS)</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testYouTubeEndpoint() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/scrape/youtube', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': 'supersecretyoutubeapikey'
+                    },
+                    body: JSON.stringify({
+                        url: 'https://www.youtube.com/@test'
+                    })
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p style="color: green;">✅ CORS OK - YouTube endpoint raggiunto</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: orange;">⚠️ Endpoint raggiunto ma errore: ${response.status}</p>`;
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ CORS bloccato: ${error.message}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Errore: ${error.message}</p>`;
+                }
+            }
+        }
+        
+        async function testHealthEndpoint() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `<p style="color: green;">✅ Health OK: ${data.status}</p>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ Health Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
