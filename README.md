@@ -526,7 +526,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Built with ❤️ for YouTube Analytics Excellence**
+
 
 [![GitHub stars](https://img.shields.io/github/stars/username/youtube-analytics-pro?style=social)](https://github.com/username/youtube-analytics-pro)
 [![GitHub forks](https://img.shields.io/github/forks/username/youtube-analytics-pro?style=social)](https://github.com/username/youtube-analytics-pro)
