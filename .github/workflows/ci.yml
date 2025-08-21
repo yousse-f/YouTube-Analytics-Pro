@@ -96,18 +96,19 @@ jobs:
         pip install -r requirements-dev.txt
         
     - name: Run unit tests
-      run: |
-        pytest tests/test_youtube_scraper.py -v -m "not selenium" \
-               --cov=app --cov-report=xml --cov-report=term-missing
-      env:
-        API_KEY: test-api-key-123
+        env:
+          API_KEY: test-api-key-123
+        run: pytest -m "not selenium"
+
+
+
+        
         
     - name: Run integration tests
-      run: |
-        pytest tests/test_api_integration.py -v \
-               --cov=app --cov-append --cov-report=xml
-      env:
-        API_KEY: test-api-key-123
+        env:
+          API_KEY: test-api-key-123
+        run: pytest -m integration
+
         
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.11'
