@@ -1,12 +1,13 @@
 # 🎬 **YouTube Analytics Pro**
 ### *Enterprise YouTube Channel Analytics Platform*
 
-[![CI/CD Pipeline](https://github.com/username/youtube-analytics-pro/workflows/CI%2FCD/badge.svg)](https://github.com/username/youtube-analytics-pro/actions)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/username/youtube-analytics-pro)
-[![Docker](https://img.shields.io/badge/docker-ready-blue)](https://hub.docker.com/r/username/youtube-analytics-pro)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green)](https://fastapi.tiangolo.com)
+[![CI](https://github.com/yousse-f/YouTube-Analytics-Pro/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/yousse-f/YouTube-Analytics-Pro/actions/workflows/ci.yml)
+![coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)
+![docker](https://img.shields.io/badge/docker-ready-blue.svg)
+![license](https://img.shields.io/badge/license-MIT-green.svg)
+![python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+![fastapi](https://img.shields.io/badge/FastAPI-0.104%2B-success.svg)
+
 
 > **Professional YouTube channel analytics and data extraction platform built with FastAPI, Selenium automation, and enterprise-grade testing framework.**
 
