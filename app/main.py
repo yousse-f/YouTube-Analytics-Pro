@@ -13,7 +13,7 @@ logger = setup_logger(__name__)
 # Crea l'applicazione FastAPI
 app = FastAPI(
     title=settings.API_TITLE,
-    description="Microservizio per lo scraping e l'analisi di siti web e profili Instagram",
+    description="Advanced YouTube Data Pipeline - Professional scraping and analysis API for channel insights, video metadata extraction, and AI-ready datasets",
     version=settings.API_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -40,10 +40,15 @@ async def root():
     Root endpoint - verifica che l'API sia attiva
     """
     return {
-        "message": "SCS Data Management API",
+        "message": "YouTube Data Pipeline API",
         "version": settings.API_VERSION,
+        "description": "Advanced YouTube scraping and analysis service",
         "docs": "/docs",
         "health": "/health",
+        "endpoints": {
+            "youtube_scraping": "/api/v1/scrape/youtube",
+            "health_check": "/health"
+        }
     }
 
 

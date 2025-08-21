@@ -1,0 +1,145 @@
+# YouTube Data Pipeline - Pre-commit Configuration
+# ================================================
+# 
+# Automated code quality checks before each commit
+# Ensures consistent style and catches issues early
+
+repos:
+  # Pre-commit hooks for common file issues
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: requirements-txt-fixer
+
+  # Python code formatting with Black
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        name: Black Python Formatter
+        description: "Format Python code with Black"
+        language: system
+        types: [python]
+        args: [--line-length=88]
+
+  # Import sorting with isort  
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort Import Sorter
+        description: "Sort Python imports"
+        language: system
+        types: [python]
+        args: [--profile=black, --line-length=88]
+
+  # Python linting with flake8
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: Flake8 Linter
+        description: "Lint Python code with flake8"
+        language: system
+        types: [python]
+        args: [
+          --max-line-length=88,
+          --extend-ignore=E203,W503,E501,
+          --exclude=__pycache__,.git,.tox,dist,*.egg,build
+        ]
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        name: MyPy Type Checker
+        description: "Static type checking with mypy"
+        language: system
+        types: [python]
+        args: [--ignore-missing-imports, --strict]
+        additional_dependencies: [
+          types-requests, 
+          types-python-dateutil,
+          pydantic,
+          fastapi
+        ]
+
+  # Security linting with bandit
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Bandit Security Linter
+        description: "Security vulnerability scanning"
+        language: system
+        types: [python]
+        args: [-r, app/, -ll, --skip=B101]
+        exclude: ^tests/
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: Hadolint Dockerfile Linter
+        description: "Lint Dockerfile for best practices"
+
+  # YAML/JSON formatting
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.11.0
+    hooks:
+      - id: pretty-format-yaml
+        args: [--autofix, --indent, "2"]
+      - id: pretty-format-json
+        args: [--autofix, --indent, "2"]
+
+  # Requirements.txt validation
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+        args: [--ignore=51457]  # Ignore specific CVEs if needed
+
+  # Commit message formatting
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: 3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+# Global configuration
+default_stages: [commit]
+fail_fast: false
+default_language_version:
+  python: python3.11
+
+# Performance optimization
+repos_exclude: |
+  (?x)^(
+    \.git/|
+    \.tox/|
+    \.venv/|
+    venv/|
+    \.pytest_cache/|
+    __pycache__/|
+    \.mypy_cache/|
+    htmlcov/|
+    \.coverage|
+    build/|
+    dist/
+  )

@@ -11,7 +11,7 @@ class Settings:
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
     API_PORT: int = int(os.getenv("API_PORT", "8000"))
     API_VERSION: str = os.getenv("API_VERSION", "v1")
-    API_TITLE: str = os.getenv("API_TITLE", "SCS Data Management API")
+    API_TITLE: str = "YouTube Data Pipeline API"
     
     # API Security
     API_KEY: str = os.getenv("API_KEY", "")

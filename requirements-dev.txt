@@ -1,0 +1,48 @@
+# YouTube Data Pipeline - Development Dependencies
+# ================================================
+
+# Testing framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-timeout==2.2.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+
+# HTTP testing
+httpx==0.26.0
+requests-mock==1.11.0
+
+# Selenium testing utilities
+selenium==4.21.0
+webdriver-manager>=4.0.2
+
+# Code quality and formatting
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+flake8-docstrings==1.7.0
+flake8-import-order==0.18.2
+mypy==1.7.1
+
+# Pre-commit hooks
+pre-commit==3.6.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+mkdocs-swagger-ui-tag==0.6.6
+
+# Security scanning
+bandit==1.7.5
+safety==2.3.4
+
+# Performance testing
+locust==2.17.0
+
+# Development utilities
+watchfiles==0.21.0
+python-dotenv==1.0.0
+
+# Type checking stubs
+types-requests==2.31.0.10

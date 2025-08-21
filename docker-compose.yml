@@ -1,20 +1,28 @@
+# YouTube Analytics Pro - Docker Compose Configuration
+# ====================================================
+
 version: '3.8'
 
 services:
-  scs-data-management:
-    build: .
-    container_name: scs-data-management
+  youtube-analytics-pro:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: youtube-analytics-pro
     ports:
       - "8000:8000"
     environment:
       - API_HOST=0.0.0.0
       - API_PORT=8000
-      - FRONTEND_URL=http://localhost:3000
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SELENIUM_HEADLESS=true
+      - PAGE_LOAD_TIMEOUT=15000
+      - REQUEST_TIMEOUT=30
     env_file:
       - .env
     volumes:
-      - ./app:/app/app:ro
+      - ./logs:/app/logs
+      - /dev/shm:/dev/shm  # Shared memory for Chrome
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -22,3 +30,26 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - youtube-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: youtube-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - youtube-network
+    profiles:
+      - with-cache
+
+networks:
+  youtube-network:
+    driver: bridge
+
+volumes:
+  redis_data:

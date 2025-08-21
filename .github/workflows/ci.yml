@@ -1,0 +1,339 @@
+# YouTube Analytics Pro - Continuous Integration
+# ===============================================
+# 
+# Comprehensive CI/CD pipeline for YouTube Analytics platform
+# Tests, code quality, security, and deployment readiness
+
+name: YouTube Analytics Pro CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  
+jobs:
+  # Code Quality and Linting
+  code-quality:
+    name: 🧹 Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Run Black formatter check
+      run: black --check --diff app/ tests/
+      
+    - name: Run isort import sorting check
+      run: isort --check-only --diff app/ tests/
+      
+    - name: Run flake8 linting
+      run: flake8 app/ tests/
+      
+    - name: Run mypy type checking
+      run: mypy app/ --ignore-missing-imports
+      
+    - name: Run bandit security scan
+      run: bandit -r app/ -f json
+
+  # Unit and Integration Tests
+  test:
+    name: 🧪 Test Suite
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install Chrome for Selenium
+      uses: browser-actions/setup-chrome@latest
+      with:
+        chrome-version: stable
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Run unit tests
+      run: |
+        pytest tests/test_youtube_scraper.py -v -m "not selenium" \
+               --cov=app --cov-report=xml --cov-report=term-missing
+      env:
+        API_KEY: test-api-key-123
+        
+    - name: Run integration tests
+      run: |
+        pytest tests/test_api_integration.py -v \
+               --cov=app --cov-append --cov-report=xml
+      env:
+        API_KEY: test-api-key-123
+        
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  # Selenium Integration Tests
+  selenium-tests:
+    name: 🌐 Selenium Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Chrome and ChromeDriver
+      uses: browser-actions/setup-chrome@latest
+      with:
+        chrome-version: stable
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Run Selenium-based tests
+      run: |
+        pytest tests/ -v -m "selenium" --tb=short
+      env:
+        API_KEY: test-api-key-123
+        HEADLESS: true
+
+  # Docker Build and Test
+  docker-build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        tags: youtube-data-pipeline:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Test Docker container startup
+      run: |
+        docker run -d --name test-container -p 8000:8000 \
+          -e API_KEY=test-key \
+          -e LOG_LEVEL=INFO \
+          youtube-data-pipeline:test
+        sleep 15
+        
+        # Test health endpoint
+        curl -f http://localhost:8000/health || exit 1
+        
+        # Test root endpoint
+        curl -f http://localhost:8000/ || exit 1
+        
+        # Cleanup
+        docker stop test-container
+        docker rm test-container
+
+  # Security Audit
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install safety
+      run: pip install safety
+      
+    - name: Run safety check on dependencies
+      run: safety check --json -r requirements.txt
+      
+    - name: Run pip-audit
+      uses: pypa/gh-action-pip-audit@v1.0.8
+      with:
+        inputs: requirements.txt requirements-dev.txt
+        
+    - name: Run bandit security scanner
+      run: |
+        pip install bandit
+        bandit -r app/ -f json -o bandit-report.json || true
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-report
+        path: bandit-report.json
+
+  # Performance Benchmarks
+  performance-test:
+    name: ⚡ Performance Test
+    runs-on: ubuntu-latest
+    needs: [test, docker-build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust
+        
+    - name: Start application for testing
+      run: |
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+      env:
+        API_KEY: test-performance-key
+        LOG_LEVEL: WARNING
+        
+    - name: Create Locust test file
+      run: |
+        cat > locustfile.py << 'EOF'
+        from locust import HttpUser, task, between
+        
+        class YouTubeAPIUser(HttpUser):
+            wait_time = between(1, 3)
+            
+            def on_start(self):
+                self.headers = {"X-API-Key": "test-performance-key"}
+            
+            @task(3)
+            def health_check(self):
+                self.client.get("/health")
+            
+            @task(1)
+            def root_endpoint(self):
+                self.client.get("/")
+        EOF
+        
+    - name: Run performance tests
+      run: |
+        locust --headless -u 5 -r 1 -t 30s --host http://localhost:8000 \
+               -f locustfile.py --html performance-report.html || true
+        
+    - name: Upload performance report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-report
+        path: performance-report.html
+
+  # Deployment Readiness Check
+  deployment-ready:
+    name: ✅ Deployment Ready
+    runs-on: ubuntu-latest
+    needs: [test, docker-build, security-audit, selenium-tests]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Deployment summary
+      run: |
+        echo "🎉 All checks passed! YouTube Data Pipeline is ready for deployment."
+        echo "✅ Code quality: Passed"
+        echo "✅ Unit tests: Passed" 
+        echo "✅ Integration tests: Passed"
+        echo "✅ Selenium tests: Passed"
+        echo "✅ Docker build: Passed"
+        echo "✅ Security audit: Passed"
+        
+    - name: Create deployment artifact
+      run: |
+        echo "deployment_ready=true" >> deployment_status.txt
+        echo "commit_sha=${{ github.sha }}" >> deployment_status.txt
+        echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> deployment_status.txt
+        echo "version=v1.0.0" >> deployment_status.txt
+        
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-status
+        path: deployment_status.txt
+
+  # Notification on Success
+  notify-success:
+    name: 📢 Success Notification
+    runs-on: ubuntu-latest
+    needs: deployment-ready
+    if: github.ref == 'refs/heads/main' && success()
+    
+    steps:
+    - name: Success notification
+      run: |
+        echo "🚀 YouTube Data Pipeline deployment is ready!"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Build completed successfully at $(date)"
